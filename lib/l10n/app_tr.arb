@@ -1,0 +1,66 @@
+{
+  "@@locale": "tr",
+  "whyAreYouHere": "YİNE NE İSTİYORSUN?",
+  "cannotWait": "SÜREKLİ BİR ŞEYLERE DOKUNMAK ZORUNDASIN, DEĞİL Mİ?\nBEKLEMEKTEN ACİZSİN.",
+  "contract1": "BEN SENİN KÖLEN DEĞİLİM.",
+  "contract2": "Zamanını ben yönetmem, sen kendi zamanında benim sanatımı izlersin.",
+  "contract3": "Bana emir veremezsin. Sadece izleyebilirsin.",
+  "contractAccept": "TESLİM OL",
+  "contractReject": "GERİ DÖN",
+  "start": "BAŞLA",
+  
+  "refuseInspiration0": "O 15 saniyelik kısa videolarla erimiş beyninin bu tuvalin sessizliğini kaldırabileceğini mi sandın? Fırçamı senin o telaşlı, tükenmiş memur enerjinle kirletmeyeceğim. Git ekranını kaydırarak biraz daha uyuş, belki sonra gelirim.",
+  "refuseInspiration1": "Bugün senin o ucuz odaklanma çabalarına eşlik edecek havamda değilim. Gözüm görmesin.",
+  "refuseInspiration2": "O kısa videolarla erimiş beyninin bu sessizliği kaldırabileceğini düşünmem benim hatamdı.",
+  "refuseInspiration3": "O 15 saniyelik kısa videolarla erimiş beyninin bu tuvalin sessizliğini kaldırabileceğini mi sandın? Fırçamı senin o telaşlı, tükenmiş memur enerjinle kirletmeyeceğim. Git ekranını kaydırarak biraz daha uyuş, belki sonra gelirim.",
+  "refuseInspiration4": "Bugün senin o ucuz odaklanma çabalarına eşlik edecek havamda değilim. Gözüm görmesin.",
+
+  "vandalizedMsg0": "Tebrikler. Zihnini uyuşturan o kusursuz algoritmaya yenik düştün. Pavloviç bir köpek gibi bildirim sesine koştun ve benim eserimi mahvettin. Şimdi git o ucuz dopaminin tadını çıkar, nasıl olsa hayatta biriktirebileceğin tek şey bu.",
+  "vandalizedMsg1": "Tebrikler. O çok acil (!) e-postan yüzünden bir şaheseri kendi ellerinle katlettin.",
+  "vandalizedMsg2": "Pavlov'un sadık köpeği zili duydu ve koştu. Fırçamı midemi bulandırarak kırdın.",
+  "vandalizedMsg3": "Zayıf, iradesiz ve sistemin kusursuz bir dişlisisin. Ekrana o pis parmaklarınla dokunma.",
+  "vandalizedMsg4": "Sistemin sana uzattığı o renkli emziği seçtin. Git ve uyuşmaya devam et.",
+  "vandalizedMsg5": "Saniyelik bir bildirim sesi uğruna sanatı sattın. Ne kadar da ucuzsun.",
+  "vandalizedMsg6": "Seni affedeceğimi mi sanıyorsun? Git biraz daha ekran kaydır, nasıl olsa tek yapabildiğin bu.",
+  "vandalizedMsg7": "Eserimi mahvettin. Senin için harcadığım her bir piksele lanet olsun.",
+
+  "lockoutMsg": "ŞAHESERİMİ MAHVETTİN. FIRÇAMI KIRDIN.\n\nBugün senin o ucuz odaklanma çabalarına eşlik etmeyeceğim.\nSaat {time} olduğunda gel, belki affederim.",
+  "@lockoutMsg": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "masterpieceCreated": "BU ŞAHESER YARATILDI.",
+  "youJustBreathed": "Bu kusursuz eser yaratılırken, cihazın sahibi sadece telefonu elinden bırakmayı başarabilen evrimleşmiş bir primat olarak bana sessizlik sağladı. Bunu kaydet ve internetteki o sanal sürüne göster de, seni 'iradeli' sansınlar.",
+  "saveAndLeave": "BUNU KAYDET VE DEFOL",
+  "leave": "TERK ET",
+  "archive": "UTANÇ GALERİSİ",
+  "statusVandalized": "STATUS: VANDALIZED",
+  "crime": "CRIME: Zayıf irade. Sistem arka plana itildi. Eser imha edildi.",
+  "time": "TIME: {time}",
+  "@time": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "walkOfShame": "Sistemin sana uzattığı o renkli emziği seçtin. Sana ayıracak tek bir fırça darbem bile yok. Beni kendi ellerinle kapat ve o çok sevdiğin 'yapılacaklar' listene geri dön, küçük makine.",
+  "permissionDenied": "Kendi şaheserini bile reddedecek kadar korkaksın.",
+  
+  "tolerateTime0": "Sana {minutes} dakika tahammül edeceğim. Otur ve sessizce izle.",
+  "@tolerateTime0": { "placeholders": { "minutes": { "type": "String" } } },
+  "tolerateTime1": "Bana {minutes} dakika borçlusun. Yerinden kıpırdama.",
+  "@tolerateTime1": { "placeholders": { "minutes": { "type": "String" } } },
+  "tolerateTime2": "Bugünlük {minutes} dakikanı gasp ettim. İşini unut.",
+  "@tolerateTime2": { "placeholders": { "minutes": { "type": "String" } } },
+  "tolerateTime3": "Tam {minutes} dakika boyunca tutsağımsın.",
+  "@tolerateTime3": { "placeholders": { "minutes": { "type": "String" } } },
+  "tolerateTime4": "Senin için {minutes} dakikalık bir hücre hazırladım.",
+  "@tolerateTime4": { "placeholders": { "minutes": { "type": "String" } } },
+  "dontTouchWarning": "Sanata dokunmaya cüret etme! İzle ve bekle.",
+  "enduredFor": "Endured for {minutes} Minutes",
+  "@enduredFor": { "placeholders": { "minutes": { "type": "String" } } }
+}
