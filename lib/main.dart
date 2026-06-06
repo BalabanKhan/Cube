@@ -14,13 +14,13 @@ import 'dart:convert';
 import 'package:ntp/ntp.dart';
 
 void main() async {
-  runZonedGuarded(() async {
-    WidgetsFlutterBinding.ensureInitialized();
-    
-    PlatformDispatcher.instance.onError = (error, stack) {
-      runApp(DiagnosticApp(error: error.toString(), stack: stack.toString()));
-      return true;
-    };
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  PlatformDispatcher.instance.onError = (error, stack) {
+    runApp(DiagnosticApp(error: error.toString(), stack: stack.toString()));
+    return true;
+  };
+
   final prefs = await SharedPreferences.getInstance();
   
   DateTime realTime = DateTime.now().toUtc();
@@ -65,18 +65,15 @@ void main() async {
     }
   }
 
-    runApp(
-      ProviderScope(
-        overrides: [
-          sharedPreferencesProvider.overrideWithValue(prefs),
-          realTimeProvider.overrideWithValue(realTime),
-        ],
-        child: const CultApp(),
-      ),
-    );
-  }, (error, stack) {
-    runApp(DiagnosticApp(error: error.toString(), stack: stack.toString()));
-  });
+  runApp(
+    ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        realTimeProvider.overrideWithValue(realTime),
+      ],
+      child: const CultApp(),
+    ),
+  );
 }
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) => throw UnimplementedError());

@@ -12,7 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vibration/vibration.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_drawing/path_drawing.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../domain/hardware_penalty_service.dart';
@@ -281,6 +281,8 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> with WidgetsBinding
   Future<void> _triggerVandalism([String? customMsg]) async {
     WakelockPlus.disable();
     
+    await _saveFailure();
+    
     final selectedMsg = customMsg ?? CultManifesto.getRandomBetrayal(context);
 
     setState(() {
@@ -313,7 +315,6 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> with WidgetsBinding
       }
     }
     
-    _saveFailure();
   }
 
   void _handleCanvasTouch() {
@@ -326,10 +327,10 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> with WidgetsBinding
         SnackBar(
           content: Text(
             l10n.dontTouchWarning,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.clinicalWhite, fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.murderRed, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
-          backgroundColor: AppTheme.murderRed,
+          backgroundColor: AppTheme.oledBlack,
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
           shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
@@ -478,7 +479,7 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> with WidgetsBinding
         final directory = await getApplicationDocumentsDirectory();
         final file = File('${directory.path}/Cubism_${DateTime.now().millisecondsSinceEpoch}.png');
         await file.writeAsBytes(byteData.buffer.asUint8List());
-        final result = await ImageGallerySaver.saveFile(file.path);
+        final result = await ImageGallerySaverPlus.saveFile(file.path);
         if (!mounted) return;
         
         if (result['isSuccess'] == true) {

@@ -48,6 +48,7 @@ class HardwarePenaltyService {
   }
 
   void stopListeners() {
+    if (kIsWeb) return;
     _screenshotCallback?.dispose();
     ScreenProtector.removeListener();
     _batteryStateSubscription?.cancel();

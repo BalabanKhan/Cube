@@ -26,21 +26,38 @@ class VandalismPainter extends CustomPainter {
     double nextDouble(int i) => ((seed * i * 1103515245 + 12345) & 0x7FFFFFFF) / 0x7FFFFFFF;
 
     void drawBrushStroke(Offset start, Offset end, Color color, double baseWidth, int bristles, int seedOffset) {
+      final double distance = (end - start).distance;
+      final int segments = (distance / 8).ceil();
+      final Offset direction = (end - start) / distance;
+      final Offset normal = Offset(-direction.dy, direction.dx);
+
       for (int i = 0; i < bristles; i++) {
-        final int currentSeed = seedOffset + i;
-        final double jitterX = (nextDouble(currentSeed) - 0.5) * 30;
-        final double jitterY = (nextDouble(currentSeed + 1) - 0.5) * 30;
+        final int currentSeed = seedOffset + i * 100;
         
+        final double bristleOffsetAmount = (nextDouble(currentSeed) - 0.5) * baseWidth;
+        final Offset startPos = start + (normal * bristleOffsetAmount);
+        
+        final Path path = Path();
+        path.moveTo(startPos.dx, startPos.dy);
+        
+        for (int j = 1; j <= segments; j++) {
+          final double t = j / segments;
+          final Offset basePos = start + (end - start) * t;
+          
+          final double segmentJitter = (nextDouble(currentSeed + j * 2) - 0.5) * (baseWidth * 0.3);
+          final Offset targetPos = basePos + (normal * bristleOffsetAmount) + (normal * segmentJitter);
+          
+          path.lineTo(targetPos.dx, targetPos.dy);
+        }
+
         final paint = Paint()
-          ..color = color.withValues(alpha: 0.3 + nextDouble(currentSeed + 2) * 0.5)
+          ..color = color.withValues(alpha: 0.2 + nextDouble(currentSeed + 2) * 0.4)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = baseWidth * (0.1 + nextDouble(currentSeed + 3) * 0.9)
+          ..strokeWidth = baseWidth * (0.05 + nextDouble(currentSeed + 3) * 0.25)
+          ..strokeJoin = StrokeJoin.miter
           ..strokeCap = StrokeCap.square;
           
-        canvas.save();
-        canvas.translate(jitterX, jitterY);
-        canvas.drawLine(start, end, paint);
-        canvas.restore();
+        canvas.drawPath(path, paint);
       }
     }
 
