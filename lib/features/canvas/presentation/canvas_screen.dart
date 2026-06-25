@@ -233,6 +233,12 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> with WidgetsBinding
 
 
   Future<void> _saveFailure() async {
+    final currentContext = _globalKey.currentContext;
+    if (currentContext == null) return;
+    final renderObject = currentContext.findRenderObject();
+    if (renderObject == null || renderObject is! RenderRepaintBoundary) return;
+    final RenderRepaintBoundary boundary = renderObject;
+
     try {
       if (kIsWeb) return; 
       
@@ -242,7 +248,6 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> with WidgetsBinding
       final prefs = await SharedPreferences.getInstance();
       prefs.setBool('is_drawing', false);
 
-      RenderRepaintBoundary boundary = _globalKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
       ui.Image image = await boundary.toImage(pixelRatio: 2.0);
       ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       
@@ -279,11 +284,13 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> with WidgetsBinding
   }
 
   Future<void> _triggerVandalism([String? customMsg]) async {
+    final selectedMsg = customMsg ?? CultManifesto.getRandomBetrayal(context);
+
     WakelockPlus.disable();
     
     await _saveFailure();
     
-    final selectedMsg = customMsg ?? CultManifesto.getRandomBetrayal(context);
+    if (!mounted) return;
 
     setState(() {
       _isVandalized = true;
@@ -435,31 +442,42 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> with WidgetsBinding
 
   Future<void> _exportAndExit() async {
     if (_isSaving) return;
+
+    final currentContext = _globalKey.currentContext;
+    if (currentContext == null) return;
+    final renderObject = currentContext.findRenderObject();
+    if (renderObject == null || renderObject is! RenderRepaintBoundary) return;
+    final RenderRepaintBoundary boundary = renderObject;
+
+    final successMsg = CultManifesto.getSuccessExitText(context);
+    final permissionDeniedDeathText = CultManifesto.getPermissionDeniedDeathText(context);
+    final permissionDeniedText = AppLocalizations.of(context)!.permissionDenied;
+
     setState(() { _isSaving = true; });
     
     try {
-      final successMsg = CultManifesto.getSuccessExitText(context);
-
-      if (Platform.isAndroid || Platform.isIOS) {
-        var status = await Permission.storage.status;
+      if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS)) {
+        Permission targetPermission = defaultTargetPlatform == TargetPlatform.iOS 
+            ? Permission.photosAddOnly 
+            : Permission.storage;
+            
+        var status = await targetPermission.status;
         if (!status.isGranted) {
-          status = await Permission.storage.request();
+          status = await targetPermission.request();
         }
         
         if (status.isPermanentlyDenied) {
-          if (mounted) {
-            _goToDeadScreen(customMessage: CultManifesto.getPermissionDeniedDeathText(context));
-          }
+          if (!mounted) return;
+          _goToDeadScreen(customMessage: permissionDeniedDeathText);
           return;
         }
 
         if (!status.isGranted) {
            if (!mounted) return;
-           final l10n = AppLocalizations.of(context)!;
            ScaffoldMessenger.of(context).showSnackBar(
              SnackBar(
                content: Text(
-                 l10n.permissionDenied,
+                 permissionDeniedText,
                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.clinicalWhite),
                ),
                backgroundColor: AppTheme.oledBlack,
@@ -471,11 +489,10 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> with WidgetsBinding
         }
       }
 
-      RenderRepaintBoundary boundary = _globalKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
       ui.Image image = await boundary.toImage(pixelRatio: 3.0);
       ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       
-      if (byteData != null) {
+      if (byteData != null && !kIsWeb) {
         final directory = await getApplicationDocumentsDirectory();
         final file = File('${directory.path}/Cubism_${DateTime.now().millisecondsSinceEpoch}.png');
         await file.writeAsBytes(byteData.buffer.asUint8List());
@@ -576,15 +593,33 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> with WidgetsBinding
                 if (_isVandalized)
                   Container(
                     color: AppTheme.murderRed,
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(40.0),
-                        child: Text(
-                          _vandalizedText ?? '',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                            color: AppTheme.oledBlack,
-                            backgroundColor: AppTheme.clinicalWhite,
+                    child: SafeArea(
+                      child: Center(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(40.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                _vandalizedText ?? '',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                                  color: AppTheme.oledBlack,
+                                  backgroundColor: AppTheme.clinicalWhite,
+                                ),
+                              ),
+                              const SizedBox(height: 40),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.oledBlack,
+                                  foregroundColor: AppTheme.clinicalWhite,
+                                  side: const BorderSide(color: AppTheme.clinicalWhite, width: 2),
+                                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                                ),
+                                onPressed: _goToDeadScreen, 
+                                child: Text(l10n.leave),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -618,38 +653,54 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> with WidgetsBinding
                   
                 if (_isFinished)
                   Positioned(
-                    bottom: 40,
+                    bottom: 20,
                     right: 20,
                     left: 20,
                     child: Container(
                       padding: const EdgeInsets.all(20),
                       color: AppTheme.oledBlack,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            l10n.masterpieceCreated,
-                            style: Theme.of(context).textTheme.displayMedium?.copyWith(color: AppTheme.clinicalWhite, fontSize: 20),
-                            textAlign: TextAlign.right,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            _successMessage,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-                            textAlign: TextAlign.right,
-                          ),
-                          const SizedBox(height: 24),
-                          Text(
-                            "CUBISM CULT",
-                            style: Theme.of(context).textTheme.displayMedium?.copyWith(color: AppTheme.murderRed),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "ENDURED FOR ${(_targetDurationSeconds ~/ 60)} MINUTES",
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.clinicalWhite),
-                          ),
-                        ],
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              l10n.masterpieceCreated,
+                              style: Theme.of(context).textTheme.displayMedium?.copyWith(color: AppTheme.clinicalWhite, fontSize: 20),
+                              textAlign: TextAlign.right,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _successMessage,
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                              textAlign: TextAlign.right,
+                            ),
+                            const SizedBox(height: 24),
+                            Text(
+                              "CUBISM CULT",
+                              style: Theme.of(context).textTheme.displayMedium?.copyWith(color: AppTheme.murderRed),
+                              textAlign: TextAlign.right,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "ENDURED FOR ${(_targetDurationSeconds ~/ 60)} MINUTES",
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.clinicalWhite),
+                              textAlign: TextAlign.right,
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.clinicalWhite,
+                                foregroundColor: AppTheme.oledBlack,
+                                shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                              ),
+                              onPressed: _exportAndExit,
+                              child: _isSaving 
+                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: AppTheme.oledBlack))
+                                  : Text(l10n.saveAndLeave),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   )
@@ -660,21 +711,23 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> with WidgetsBinding
 
           if (!_isStarted && !_isVandalized && !_isFinished)
             Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  TextButton(
-                    onPressed: _handleStart,
-                    child: Text(l10n.start, style: Theme.of(context).textTheme.displayLarge),
-                  ),
-                  const SizedBox(height: 60),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ArchiveScreen()));
-                    },
-                    child: Text(l10n.archive, style: Theme.of(context).textTheme.bodyLarge?.copyWith(decoration: TextDecoration.underline)),
-                  ),
-                ],
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: _handleStart,
+                      child: Text(l10n.start, style: Theme.of(context).textTheme.displayLarge),
+                    ),
+                    const SizedBox(height: 60),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ArchiveScreen()));
+                      },
+                      child: Text(l10n.archive, style: Theme.of(context).textTheme.bodyLarge?.copyWith(decoration: TextDecoration.underline)),
+                    ),
+                  ],
+                ),
               ),
             ),
             
@@ -698,37 +751,6 @@ class _CanvasScreenState extends ConsumerState<CanvasScreen> with WidgetsBinding
                   height: 24,
                   color: AppTheme.clinicalWhite,
                 ),
-              ),
-            ),
-            
-          if (_isFinished)
-            Positioned(
-              bottom: 160,
-              right: 20,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.clinicalWhite,
-                  foregroundColor: AppTheme.oledBlack,
-                ),
-                onPressed: _exportAndExit,
-                child: _isSaving 
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: AppTheme.oledBlack))
-                    : Text(l10n.saveAndLeave),
-              ),
-            ),
-            
-          if (_isVandalized)
-            Positioned(
-              bottom: 40,
-              right: 20,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.oledBlack,
-                  foregroundColor: AppTheme.clinicalWhite,
-                  side: const BorderSide(color: AppTheme.clinicalWhite, width: 2),
-                ),
-                onPressed: _goToDeadScreen, 
-                child: Text(l10n.leave),
               ),
             ),
         ],

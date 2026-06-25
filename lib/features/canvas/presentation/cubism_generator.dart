@@ -61,8 +61,10 @@ class CompositionLayerRule {
 
 class CompositionTemplate {
   final List<CompositionLayerRule> layers;
+  final List<Offset> focalPoints; // Added for intentional blueprint structure
 
-  CompositionTemplate(this.layers);
+  CompositionTemplate(this.layers, {this.focalPoints = const []});
+
 
   CompositionLayerRule getRuleForIndex(int elementIndex, int totalElements) {
     // Map elementIndex to a layer proportionately
@@ -123,7 +125,7 @@ class CubismTemplates {
       minRotation: -pi, maxRotation: pi,
       isFilled: true,
     ),
-  ]);
+  ], focalPoints: [const Offset(0.5, 0.4)]); // Focus on the face/eyes
 
   static final stillLifeTemplate = CompositionTemplate([
     // Background walls
@@ -166,7 +168,7 @@ class CubismTemplates {
       minRotation: -pi, maxRotation: pi,
       isFilled: true,
     ),
-  ]);
+  ], focalPoints: [const Offset(0.5, 0.65)]); // Focus on the table cluster
 
   static final landscapeTemplate = CompositionTemplate([
     // Sky
@@ -209,7 +211,7 @@ class CubismTemplates {
       minRotation: -pi/4, maxRotation: pi/4,
       isFilled: false,
     ),
-  ]);
+  ], focalPoints: [const Offset(0.7, 0.2)]); // Focus on the celestial body (sun/moon)
 
   static final collageTemplate = CompositionTemplate([
     // Background Newspaper / Paper Clippings
@@ -244,7 +246,7 @@ class CubismTemplates {
       minRotation: 0, maxRotation: pi,
       isFilled: false,
     ),
-  ]);
+  ], focalPoints: [const Offset(0.4, 0.4), const Offset(0.7, 0.7)]); // Multiple asymmetric focal points
 
   static final interiorSpaceTemplate = CompositionTemplate([
     // Reversed Perspective Walls & Ceilings
@@ -279,7 +281,7 @@ class CubismTemplates {
       minRotation: -pi/8, maxRotation: pi/8,
       isFilled: true,
     ),
-  ]);
+  ], focalPoints: [const Offset(0.5, 0.5)]); // Center perspective focus
 
   static final industrialTemplate = CompositionTemplate([
     // Factory Chimneys (Vertical axes)
@@ -314,7 +316,7 @@ class CubismTemplates {
       minRotation: -pi/4, maxRotation: pi/4,
       isFilled: true,
     ),
-  ]);
+  ], focalPoints: [const Offset(0.5, 0.5)]); // Chaotic center focus
 
   static final List<CompositionTemplate> all = [
     portraitTemplate, 
@@ -329,6 +331,61 @@ class CubismTemplates {
 }
 
 class CompositionGenerator {
+  static Path _simplifyPath(Path originalPath, {double stepLength = 15.0}) {
+    final simplified = Path();
+    for (final metric in originalPath.computeMetrics()) {
+      if (metric.length == 0) continue;
+      
+      final tangent0 = metric.getTangentForOffset(0.0);
+      if (tangent0 != null) {
+        simplified.moveTo(tangent0.position.dx, tangent0.position.dy);
+      }
+      
+      double distance = stepLength;
+      while (distance < metric.length) {
+        final tangent = metric.getTangentForOffset(distance);
+        if (tangent != null) {
+          simplified.lineTo(tangent.position.dx, tangent.position.dy);
+        }
+        distance += stepLength;
+      }
+      
+      final tangentEnd = metric.getTangentForOffset(metric.length);
+      if (tangentEnd != null) {
+        simplified.lineTo(tangentEnd.position.dx, tangentEnd.position.dy);
+      }
+      
+      if (metric.isClosed) {
+        simplified.close();
+      }
+    }
+    return simplified;
+  }
+
+  static Path _getGlobalPath(Path localPath, Offset offset, double rotation, double scale) {
+    final Matrix4 matrix = Matrix4.identity()
+      ..setTranslationRaw(offset.dx, offset.dy, 0.0)
+      ..rotateZ(rotation);
+    matrix.multiply(Matrix4.diagonal3Values(scale, scale, 1.0));
+    return localPath.transform(matrix.storage);
+  }
+
+  static Color _blendColors(Color c1, Color c2) {
+    return Color.fromARGB(
+      255,
+      (((c1.r * 255.0) + (c2.r * 255.0)) / 2.0).round().clamp(0, 255),
+      (((c1.g * 255.0) + (c2.g * 255.0)) / 2.0).round().clamp(0, 255),
+      (((c1.b * 255.0) + (c2.b * 255.0)) / 2.0).round().clamp(0, 255),
+    );
+  }
+
+  static Path _createBlueprintLine(Offset start, Offset end) {
+    final path = Path();
+    path.moveTo(start.dx, start.dy);
+    path.lineTo(end.dx, end.dy);
+    return path;
+  }
+
   static List<CubismElement> generatePlannedComposition(
     Size canvasSize, 
     int durationMinutes, 
@@ -341,12 +398,49 @@ class CompositionGenerator {
     final palette = CubismPalettes.getRandomPalette(random); 
     final template = CubismTemplates.getRandomTemplate(random); 
 
+    // 1. Calculate Absolute Focal Points
+    final absoluteFocalPoints = template.focalPoints
+        .map((f) => Offset(f.dx * canvasSize.width, f.dy * canvasSize.height))
+        .toList();
+
+    // 2. Blueprint / Kılavuz Çizgileri Çizimi
+    // "Kafasında kurup çiziyor" hissi için odak noktalarından geçen inşa çizgileri atıyoruz.
+    if (absoluteFocalPoints.isNotEmpty) {
+      for (final focal in absoluteFocalPoints) {
+        // Çapraz, yatay veya dikey ince çizgiler
+        for (int i = 0; i < 3; i++) {
+          final angle = random.nextDouble() * pi;
+          final length = canvasSize.width * 2.0; // ekrandan taşacak kadar uzun
+          final p1 = Offset(focal.dx + cos(angle) * length, focal.dy + sin(angle) * length);
+          final p2 = Offset(focal.dx - cos(angle) * length, focal.dy - sin(angle) * length);
+          
+          plannedElements.add(
+            CubismElement(
+              path: _createBlueprintLine(p1, p2),
+              color: const Color(0xFF1E1E1E).withValues(alpha: 0.15), // Çok soluk siyah/gri kılavuz
+              offset: Offset.zero,
+              rotation: 0.0,
+              scale: 1.0,
+              isFilled: false,
+              applyJitter: false, // Ince teknik taslak çizgileri titremez, dümdüz çekilir
+            ),
+          );
+        }
+      }
+    } 
+
     for (int i = 0; i < totalElements; i++) {
       final rule = template.getRuleForIndex(i, totalElements);
       double progress = i / totalElements;
       
       final pathIndex = rule.pathIndices[random.nextInt(rule.pathIndices.length)];
-      final path = loadedPaths[pathIndex % loadedPaths.length];
+      var path = loadedPaths[pathIndex % loadedPaths.length];
+
+      // Açısal Basitleştirme (Angular Simplification)
+      // %30 ihtimalle yolları basitleştirip keskin köşeli brutalist hale getirelim.
+      if (random.nextDouble() < 0.3) {
+        path = _simplifyPath(path, stepLength: 12.0 + random.nextDouble() * 18.0);
+      }
 
       final Rect bounds = path.getBounds();
       double scale = rule.minScale + random.nextDouble() * (rule.maxScale - rule.minScale);
@@ -366,8 +460,20 @@ class CompositionGenerator {
          safeRadius = sqrt(bounds.width * bounds.width + bounds.height * bounds.height) * scale / 2.0;
       }
 
-      final rawDx = (rule.minX + random.nextDouble() * (rule.maxX - rule.minX)) * canvasSize.width;
-      final rawDy = (rule.minY + random.nextDouble() * (rule.maxY - rule.minY)) * canvasSize.height;
+      // 3. Focal Gravity (Odak Çekim Gücü)
+      // Formların tamamen rastgele saçılmasını engellemek için odak noktalarına doğru belli bir oranda çekiyoruz.
+      double rawDx = (rule.minX + random.nextDouble() * (rule.maxX - rule.minX)) * canvasSize.width;
+      double rawDy = (rule.minY + random.nextDouble() * (rule.maxY - rule.minY)) * canvasSize.height;
+
+      if (absoluteFocalPoints.isNotEmpty) {
+        // Obje merkeze yakın katmanlardaysa daha çok çekilir, arkaplan katmanları daha az çekilir.
+        // max pull 0.65 (%65 oranında focal point'e yaklaşır).
+        double pullStrength = random.nextDouble() * 0.65 * (1.0 - progress * 0.5); 
+        final focal = absoluteFocalPoints[random.nextInt(absoluteFocalPoints.length)];
+        
+        rawDx = rawDx * (1.0 - pullStrength) + focal.dx * pullStrength;
+        rawDy = rawDy * (1.0 - pullStrength) + focal.dy * pullStrength;
+      }
 
       final safeMinX = safeRadius;
       final safeMaxX = max(safeMinX, canvasSize.width - safeRadius);
@@ -390,6 +496,48 @@ class CompositionGenerator {
         ),
       );
     }
+
+    // Kesişim Algılama ve Boyama (Intersection Path Operations)
+    // Listeyi dolaşıp kesişen elemanlar arasına ek kübist katmanlar ekleyelim.
+    final List<CubismElement> intersections = [];
+    for (int i = 0; i < plannedElements.length - 1; i++) {
+      final elA = plannedElements[i];
+      if (!elA.isFilled) continue;
+
+      final globalPathA = _getGlobalPath(elA.path, elA.offset, elA.rotation, elA.scale);
+
+      for (int j = i + 1; j < min(i + 4, plannedElements.length); j++) { // performans için komşu 3 elemana bakalım
+        final elB = plannedElements[j];
+        if (!elB.isFilled) continue;
+
+        final globalPathB = _getGlobalPath(elB.path, elB.offset, elB.rotation, elB.scale);
+
+        try {
+          final intersectPath = Path.combine(PathOperation.intersect, globalPathA, globalPathB);
+          final bounds = intersectPath.getBounds();
+          
+          // Eğer anlamlı bir kesişim alanı varsa
+            if (bounds.width > 20 && bounds.height > 20) {
+              intersections.add(
+                CubismElement(
+                  path: intersectPath,
+                  color: _blendColors(elA.color, elB.color).withValues(alpha: 0.8), // hafif saydam ve harmanlanmış renk
+                  offset: Offset.zero,
+                  rotation: 0.0,
+                  scale: 1.0,
+                  isFilled: true,
+                  applyJitter: false, // Kesişen yollar zaten jitter'lanmış temel yollardan üretildi
+                ),
+              );
+            }
+        } catch (e) {
+          // Bazı eski Flutter sürümleri veya platformlar combine işlemlerinde hata üretebilir, yoksayalım.
+        }
+      }
+    }
+
+    // Kesişen katmanları normal çizim sıralamasına ekleyelim.
+    plannedElements.addAll(intersections);
     
     return plannedElements;
   }

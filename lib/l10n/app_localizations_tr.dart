@@ -159,4 +159,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String enduredFor(String minutes) {
     return 'Endured for $minutes Minutes';
   }
+
+  @override
+  String get timeManipulatedWarning =>
+      'Beni ucuz zaman hileleriyle kandırabileceğini mi sandın?\nİnfazın iki katına çıkarıldı.\nBekle ve çürü.';
+
+  @override
+  String lockoutCountdown(String h, String m, String s) {
+    return 'İnfazın bitmesine $h:$m:$s kaldı.\nGit.';
+  }
 }

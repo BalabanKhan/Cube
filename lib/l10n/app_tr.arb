@@ -62,5 +62,14 @@
   "@tolerateTime4": { "placeholders": { "minutes": { "type": "String" } } },
   "dontTouchWarning": "Sanata dokunmaya cüret etme! İzle ve bekle.",
   "enduredFor": "Endured for {minutes} Minutes",
-  "@enduredFor": { "placeholders": { "minutes": { "type": "String" } } }
+  "@enduredFor": { "placeholders": { "minutes": { "type": "String" } } },
+  "timeManipulatedWarning": "Beni ucuz zaman hileleriyle kandırabileceğini mi sandın?\nİnfazın iki katına çıkarıldı.\nBekle ve çürü.",
+  "lockoutCountdown": "İnfazın bitmesine {h}:{m}:{s} kaldı.\nGit.",
+  "@lockoutCountdown": {
+    "placeholders": {
+      "h": { "type": "String" },
+      "m": { "type": "String" },
+      "s": { "type": "String" }
+    }
+  }
 }

@@ -63,5 +63,14 @@
   "tolerateTime3": "I shall tolerate you for {minutes} minutes.",
   "@tolerateTime3": { "placeholders": { "minutes": { "type": "String" } } },
   "tolerateTime4": "I shall tolerate you for {minutes} minutes.",
-  "@tolerateTime4": { "placeholders": { "minutes": { "type": "String" } } }
+  "@tolerateTime4": { "placeholders": { "minutes": { "type": "String" } } },
+  "timeManipulatedWarning": "Did you think you could fool me with cheap time tricks?\nYour execution has been doubled.\nWait and rot.",
+  "lockoutCountdown": "You have {h}:{m}:{s} left until your execution ends.\nLeave.",
+  "@lockoutCountdown": {
+    "placeholders": {
+      "h": { "type": "String" },
+      "m": { "type": "String" },
+      "s": { "type": "String" }
+    }
+  }
 }

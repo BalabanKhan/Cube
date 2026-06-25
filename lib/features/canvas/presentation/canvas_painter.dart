@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
@@ -27,6 +28,48 @@ class ShaderBackgroundPainter extends CustomPainter {
   }
 }
 
+Path applyBrutalistJitter(Path originalPath, double intensity, double frequency) {
+  final jittered = Path();
+  for (final metric in originalPath.computeMetrics()) {
+    if (metric.length == 0) continue;
+    
+    bool isFirst = true;
+    double distance = 0.0;
+    const double step = 6.0; // sample points every 6 pixels
+    
+    while (distance <= metric.length) {
+      final tangent = metric.getTangentForOffset(distance);
+      if (tangent != null) {
+        final pos = tangent.position;
+        final vector = tangent.vector;
+        
+        // Perpendicular vector
+        final perpX = -vector.dy;
+        final perpY = vector.dx;
+        
+        // Procedural wave using sine wave combinations
+        final noiseVal = math.sin(distance * frequency) * math.cos(distance * frequency * 2.3);
+        final displacement = noiseVal * intensity;
+        
+        final newX = pos.dx + perpX * displacement;
+        final newY = pos.dy + perpY * displacement;
+        
+        if (isFirst) {
+          jittered.moveTo(newX, newY);
+          isFirst = false;
+        } else {
+          jittered.lineTo(newX, newY);
+        }
+      }
+      distance += step;
+    }
+    if (metric.isClosed) {
+      jittered.close();
+    }
+  }
+  return jittered;
+}
+
 class CubismElement {
   final Path path;
   final Color color;
@@ -35,16 +78,22 @@ class CubismElement {
   final double scale;
   double progress; // 0.0 to 1.0
   final bool isFilled;
+  
+  // Cache the path metrics to avoid computeMetrics in paint()
+  late final List<ui.PathMetric> cachedMetrics;
 
   CubismElement({
-    required this.path,
+    required Path path,
     required this.color,
     required this.offset,
     required this.rotation,
     required this.scale,
     this.progress = 0.0,
     required this.isFilled,
-  });
+    bool applyJitter = true,
+  }) : path = applyJitter ? applyBrutalistJitter(path, 1.5, 0.12) : path {
+    cachedMetrics = this.path.computeMetrics().toList();
+  }
 }
 
 class CubismPainter extends CustomPainter {
@@ -71,9 +120,8 @@ class CubismPainter extends CustomPainter {
       final double strokeProgress = (element.progress / 0.8).clamp(0.0, 1.0);
       final double fillProgress = ((element.progress - 0.8) / 0.2).clamp(0.0, 1.0);
 
-      final metrics = element.path.computeMetrics().toList();
       final animatedPath = Path();
-      for (var metric in metrics) {
+      for (var metric in element.cachedMetrics) {
         animatedPath.addPath(metric.extractPath(0, metric.length * strokeProgress), Offset.zero);
       }
 
@@ -92,7 +140,8 @@ class CubismPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2.0 + (i % 3) * 0.8
           ..strokeJoin = StrokeJoin.bevel
-          ..strokeCap = StrokeCap.square;
+          ..strokeCap = StrokeCap.square
+          ..blendMode = BlendMode.multiply;
           
         canvas.save();
         canvas.translate(jitterX, jitterY);
@@ -111,7 +160,8 @@ class CubismPainter extends CustomPainter {
           
           final fillPaint = Paint()
             ..color = element.color.withValues(alpha: fillProgress * 0.25)
-            ..style = PaintingStyle.fill;
+            ..style = PaintingStyle.fill
+            ..blendMode = BlendMode.multiply;
             
           canvas.save();
           canvas.translate(fillJitterX, fillJitterY);

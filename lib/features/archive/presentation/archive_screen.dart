@@ -75,6 +75,20 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                                 child: Image.file(
                                   File(imagePath),
                                   fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: AppTheme.oledBlack,
+                                      child: Center(
+                                        child: Text(
+                                          "[ CORRUPTED RECORD ]",
+                                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                            color: AppTheme.murderRed,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
                               Container(color: AppTheme.oledBlack.withValues(alpha: 0.5)),

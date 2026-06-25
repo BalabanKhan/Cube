@@ -1,3 +1,4 @@
+import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -226,7 +227,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     height: 24,
                     color: AppTheme.clinicalWhite,
                   ),
-                ),
+                ).animate()
+                 .fadeIn(duration: 800.ms, delay: 1.seconds)
+                 .rotate(duration: 400.ms, curve: Curves.easeOutBack),
               ),
           ],
         ),
@@ -246,7 +249,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             child: Text(
               l10n.whyAreYouHere,
               style: Theme.of(context).textTheme.bodyMedium,
-            ),
+            ).animate()
+             .fadeIn(duration: 1500.ms, curve: Curves.easeOut)
+             .slideY(begin: 0.2, end: 0, duration: 1500.ms, curve: Curves.easeOutExpo),
           ),
         );
       case OnboardingState.vandalized:
@@ -256,7 +261,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             SizedBox.expand(
               child: CustomPaint(
                 painter: VandalismPainter(),
-              ),
+              ).animate()
+               .scaleXY(begin: 1.1, end: 1.0, duration: 400.ms, curve: Curves.easeOutBack)
+               .fadeIn(duration: 200.ms),
             ),
             Center(
               child: Padding(
@@ -268,38 +275,45 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     color: AppTheme.oledBlack,
                     backgroundColor: AppTheme.clinicalWhite,
                   ),
-                ),
+                ).animate()
+                 .shake(hz: 8, duration: 300.ms)
+                 .fadeIn(duration: 100.ms),
               ),
             ),
           ],
         );
       case OnboardingState.contract:
-        return Padding(
+        return Center(
           key: const ValueKey('contract'),
-          padding: const EdgeInsets.symmetric(horizontal: 30.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _dynamicContractText, 
-                style: Theme.of(context).textTheme.displayMedium?.copyWith(height: 1.5),
-              ),
-              const SizedBox(height: 60),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: _rejectContract,
-                    child: Text(l10n.contractReject),
-                  ),
-                  TextButton(
-                    onPressed: _acceptContract,
-                    child: Text(l10n.contractAccept, style: const TextStyle(color: AppTheme.murderRed)),
-                  ),
-                ],
-              )
-            ],
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 20.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _dynamicContractText, 
+                  style: Theme.of(context).textTheme.displayMedium?.copyWith(height: 1.5),
+                ).animate()
+                 .fadeIn(duration: 1200.ms, delay: 200.ms)
+                 .slideY(begin: 0.1, end: 0, duration: 800.ms, curve: Curves.easeOutExpo),
+                const SizedBox(height: 40),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: _rejectContract,
+                      child: Text(l10n.contractReject),
+                    ),
+                    TextButton(
+                      onPressed: _acceptContract,
+                      child: Text(l10n.contractAccept, style: const TextStyle(color: AppTheme.murderRed)),
+                    ),
+                  ],
+                ).animate()
+                 .fadeIn(duration: 600.ms, delay: 1500.ms),
+              ],
+            ),
           ),
         );
     }
@@ -315,41 +329,45 @@ class PrivacyScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppTheme.oledBlack,
       body: SafeArea(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextButton(
-              onPressed: () {
-                // Future Privacy Policy link logic can go here
-              },
-              child: Text(CultManifesto.getPrivacyPolicyText(context), style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.clinicalWhite)),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    // Future Privacy Policy link logic can go here
+                  },
+                  child: Text(CultManifesto.getPrivacyPolicyText(context), style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.clinicalWhite)),
+                ),
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.clear();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(CultManifesto.getDataDeletedText(context)),
+                          backgroundColor: AppTheme.murderRed,
+                          behavior: SnackBarBehavior.floating,
+                          duration: const Duration(seconds: 3),
+                        ),
+                      );
+                    }
+                  },
+                  child: Text(CultManifesto.getDeleteDataText(context), style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.murderRed)),
+                ),
+                const SizedBox(height: 40),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(l10n.contractReject, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey)),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            TextButton(
-              onPressed: () async {
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.clear();
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(CultManifesto.getDataDeletedText(context)),
-                      backgroundColor: AppTheme.murderRed,
-                      behavior: SnackBarBehavior.floating,
-                      duration: const Duration(seconds: 3),
-                    ),
-                  );
-                }
-              },
-              child: Text(CultManifesto.getDeleteDataText(context), style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.murderRed)),
-            ),
-            const SizedBox(height: 40),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.contractReject, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey)),
-            ),
-            const SizedBox(height: 40),
-          ],
+          ),
         ),
       ),
     );

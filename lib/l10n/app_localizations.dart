@@ -331,6 +331,18 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Endured for {minutes} Minutes'**
   String enduredFor(String minutes);
+
+  /// No description provided for @timeManipulatedWarning.
+  ///
+  /// In tr, this message translates to:
+  /// **'Beni ucuz zaman hileleriyle kandırabileceğini mi sandın?\nİnfazın iki katına çıkarıldı.\nBekle ve çürü.'**
+  String get timeManipulatedWarning;
+
+  /// No description provided for @lockoutCountdown.
+  ///
+  /// In tr, this message translates to:
+  /// **'İnfazın bitmesine {h}:{m}:{s} kaldı.\nGit.'**
+  String lockoutCountdown(String h, String m, String s);
 }
 
 class _AppLocalizationsDelegate

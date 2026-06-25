@@ -159,4 +159,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String enduredFor(String minutes) {
     return 'Endured for $minutes Minutes';
   }
+
+  @override
+  String get timeManipulatedWarning =>
+      'Did you think you could fool me with cheap time tricks?\nYour execution has been doubled.\nWait and rot.';
+
+  @override
+  String lockoutCountdown(String h, String m, String s) {
+    return 'You have $h:$m:$s left until your execution ends.\nLeave.';
+  }
 }
